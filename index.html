@@ -3,13 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <meta name="description" content="Yana Belova Psychology Website">
+    <link rel="stylesheet" href="styles.css">
+    <title>Yana Belova - Psychologist</title>
 </head>
 <body>
-    <h1>Welcome to our service</h1>
-    <p>This is the first paragraph.</p>
-    <p>This is the second paragraph.</p>
-    <!-- Removed paragraph containing the payment notice -->
-    <p>Contact us for more information.</p>
+    <header class="hero">
+        <h1>Yana Belova</h1>
+        <p>Your well-being is our priority.</p>
+    </header>
+    <main>
+        <section class="services">
+            <h2>Our Services</h2>
+            <div class="services-grid">
+                <div class="service-item">Therapy</div>
+                <div class="service-item">Counseling</div>
+                <div class="service-item">Workshop</div>
+                <div class="service-item">Online Consultation</div>
+            </div>
+        </section>
+        <section class="order-form">
+            <h2>Order a Consultation</h2>
+            <form action="#" method="post">
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" required>
+                <label for="service">Select Service:</label>
+                <select id="service" name="service">
+                    <option value="therapy">Therapy</option>
+                    <option value="counseling">Counseling</option>
+                    <option value="workshop">Workshop</option>
+                    <option value="consultation">Online Consultation</option>
+                </select>
+                <button type="submit">Order</button>
+            </form>
+        </section>
+    </main>
+    <footer>
+        <p>Contact us at: contact@yabpsychology.com</p>
+    </footer>
 </body>
 </html>
