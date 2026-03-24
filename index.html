@@ -280,97 +280,95 @@ function startReading(){
   document.getElementById('ldiv').style.display='block';
   document.getElementById('rdiv').innerHTML='';
   document.getElementById('cdiv').style.display='none';
- var prompt = 'Тема: ' + SP[sp] + '. ' + 'Ситуация: "' + q + '". Ты психолог. Напиши развернутый психологический разбор. ОТВЕТ ТОЛЬКО JSON. Структура: {"cards":[{"name":"Что происходит","reading":"текст"},{"name":"Почему так","reading":"текст"},{"name":"Что делать","reading":"текст"}],"conclusion":"текст"}. В "Что делать" НЕ используй техники в виде списка команд. Не пиши "сделай то", "определи то". Напиши живой, поддерживающий текст от лица подруги-психолога. Объясни, что происходит, почему это нормально, и предложи 2-3 способа, как можно себе помочь. Без приказов. С теплотой и пониманием. В самом конце, после вывода, добавь отдельной строкой ремарку: "С позиции наглого и жесткого человека это звучало бы так: [2-3 резкие фразы]". Запрещены звездочки и английские слова.';
+  
+  var prompt = 'Тема: ' + SP[sp] + '. ' + 'Ситуация: "' + q + '". Ты психолог. Напиши развернутый психологический разбор. ОТВЕТ ТОЛЬКО JSON. Структура: {"cards":[{"name":"Что происходит","reading":"текст"},{"name":"Почему так","reading":"текст"},{"name":"Что делать","reading":"текст"}],"conclusion":"текст"}. В "Что делать" НЕ используй техники в виде списка команд. Не пиши "сделай то", "определи то". Напиши живой, поддерживающий текст от лица подруги-психолога. Объясни, что происходит, почему это нормально, и предложи 2-3 способа, как можно себе помочь. Без приказов. С теплотой и пониманием. В самом конце, после вывода, добавь отдельной строкой ремарку: "С позиции наглого и жесткого человека это звучало бы так: [2-3 резкие фразы]". Запрещены звездочки и английские слова.';
 
-fetch(WK, {
+  fetch(WK, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages: [
-            { 
-                role: 'system', 
-                content: 'Ты — честная подруга-психолог. Твой ответ — только JSON. Никакого текста до или после JSON. Начинай с { и заканчивай }. В разделе "Что делать" пиши живой, поддерживающий текст. Без команд "сделай", "определи". Как подруга, которая понимает и не давит. Предложи способы помочь себе мягко. В конце добавь ремарку: "С позиции наглого и жесткого человека это звучало бы так: ..." Вывод — резкая правда. Тон: теплый, честный.'
-            },
-            { role: 'user', content: prompt }
-        ],
-        max_tokens: 5000,
-        temperature: 0.85
+      model: 'llama-3.3-70b-versatile',
+      messages: [
+        { 
+          role: 'system', 
+          content: 'Ты — честная подруга-психолог. Твой ответ — только JSON. Никакого текста до или после JSON. Начинай с { и заканчивай }. В разделе "Что делать" пиши живой, поддерживающий текст. Без команд "сделай", "определи". Как подруга, которая понимает и не давит. Предложи способы помочь себе мягко. В конце добавь ремарку: "С позиции наглого и жесткого человека это звучало бы так: ..." Вывод — резкая правда. Тон: теплый, честный.'
+        },
+        { role: 'user', content: prompt }
+      ],
+      max_tokens: 5000,
+      temperature: 0.85
     })
-})
-.then(function(r) { return r.text(); })
-.then(function(text) {
-    console.log('СЫРОЙ ОТВЕТ:');
-    console.log(text);
-    console.log('--- КОНЕЦ СЫРОГО ОТВЕТА ---');
-    
-    // Пытаемся найти JSON
-    var jsonStart = text.indexOf('{');
-    var jsonEnd = text.lastIndexOf('}');
-    
-    if (jsonStart === -1 || jsonEnd === -1) {
-        throw new Error('В ответе не найден JSON');
-    }
-    
-    var jsonString = text.substring(jsonStart, jsonEnd + 1);
-    jsonString = jsonString.trim();
-    
-    // Убираем всё после последней }
-    var lastBrace = jsonString.lastIndexOf('}');
-    if (lastBrace !== -1 && lastBrace < jsonString.length - 1) {
-        jsonString = jsonString.substring(0, lastBrace + 1);
-    }
-    
-    return JSON.parse(jsonString);
-})
-.then(function(text) {
-    // Пытаемся найти JSON в ответе
-    var jsonStart = text.indexOf('{');
-    var jsonEnd = text.lastIndexOf('}');
-    
-    if (jsonStart === -1 || jsonEnd === -1) {
-        throw new Error('В ответе не найден JSON');
-    }
-    
-    var jsonString = text.substring(jsonStart, jsonEnd + 1);
-    
-    try {
-        return JSON.parse(jsonString);
-    } catch (e) {
-        console.error('Ошибка парсинга JSON:', e);
-        console.error('Полученный текст:', text);
-        throw e;
-    }
-})
-  .then(function(data){
-    if(data.error)throw new Error(data.error.message);
-    var raw=data.choices[0].message.content.replace(/```json|```/g,'').trim();
-    var txt=raw.replace(/\n/g,' ').replace(/\r/g,'').replace(/\t/g,' ').replace(/,\s*]/g,']').replace(/,\s*}/g,'}');
-    var p=JSON.parse(txt);
-    // Clean foreign words from all text
-    function cleanForeign(str){
-      return str.replace(/[Ѐ-ӿ -~\s.,!?\-:;"'()\d]+/g, function(m){ return m; })
-               .replace(/[^Ѐ-ӿ -~\s]/g,' ')
-               .replace(/[a-zA-Z]{2,}/g,'')
-               .replace(/  +/g,' ').trim();
-    }
-    p.cards.forEach(function(c){ c.reading = cleanForeign(c.reading); });
-    if(p.conclusion) p.conclusion = cleanForeign(p.conclusion);
-    document.getElementById('ldiv').style.display='none';
-    ft='';var area=document.getElementById('rdiv');
-    p.cards.forEach(function(c){
-      var d=document.createElement('div');d.className='rb';
-      var cleaned = c.reading.replace(/Шаг \d+:[^.]*?(психолог|специалист|терапевт|врач|помощь профессионал)[^.]*\./gi, '').trim();
-      var txt = c.name === 'Что делать' ? cleaned.replace(/Шаг (\d+):/g, '<br><b>Шаг $1:</b>').replace(/^<br>/, '') : c.reading;
-      d.innerHTML='<div class="rb-name">'+c.name+'</div><div class="rb-text">'+txt+'</div>';
-      area.appendChild(d);ft+=c.name+'\n'+c.reading+'\n\n';
-    });
-    if(p.conclusion){document.getElementById('ctxt').textContent=p.conclusion;document.getElementById('cdiv').style.display='block';ft+='Вывод:\n'+p.conclusion;}
   })
-  .catch(function(e){document.getElementById('ldiv').textContent='⚠️ Ошибка: '+e.message;})
-  .finally(function(){btn.disabled=false;btn.textContent='🧠 Получить ответ';});
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.error) throw new Error(data.error.message);
+    
+    var content = data.choices[0].message.content;
+    
+    if (typeof content === 'object') {
+      return content;
+    }
+    
+    var cleaned = content.replace(/```json|```/g, '').trim();
+    var jsonStart = cleaned.indexOf('{');
+    var jsonEnd = cleaned.lastIndexOf('}');
+    
+    if (jsonStart === -1 || jsonEnd === -1) {
+      throw new Error('В ответе не найден JSON');
+    }
+    
+    var jsonString = cleaned.substring(jsonStart, jsonEnd + 1);
+    return JSON.parse(jsonString);
+  })
+  .then(function(p) {
+    function cleanForeign(str){
+      if (!str) return '';
+      return str.replace(/[A-Za-z]/g, '').replace(/\s+/g, ' ').trim();
+    }
+    
+    p.cards.forEach(function(c){ 
+      c.reading = cleanForeign(c.reading); 
+    });
+    if(p.conclusion) p.conclusion = cleanForeign(p.conclusion);
+    
+    document.getElementById('ldiv').style.display='none';
+    var area=document.getElementById('rdiv');
+    p.cards.forEach(function(c){
+      var d=document.createElement('div');
+      d.className='rb';
+      d.innerHTML='<div class="rb-name">'+c.name+'</div><div class="rb-text">'+c.reading+'</div>';
+      area.appendChild(d);
+    });
+    if(p.conclusion){
+      document.getElementById('ctxt').textContent=p.conclusion;
+      document.getElementById('cdiv').style.display='block';
+    }
+    
+    window.lastResult = p;
+  })
+  .catch(function(e){
+    document.getElementById('ldiv').innerHTML='⚠️ Ошибка: '+e.message;
+    console.error(e);
+  })
+  .finally(function(){
+    btn.disabled=false;
+    btn.textContent='🧠 Получить ответ';
+  });
 }
 
+function copyR(){
+  if(window.lastResult){
+    var text = '';
+    window.lastResult.cards.forEach(function(c){
+      text += c.name + '\n' + c.reading + '\n\n';
+    });
+    if(window.lastResult.conclusion) text += 'Вывод:\n' + window.lastResult.conclusion;
+    navigator.clipboard.writeText(text);
+    alert('Ответ скопирован в буфер обмена');
+  } else {
+    alert('Нет ответа для копирования');
+  }
+}
 </script>
 </body>
 </html>
