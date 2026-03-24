@@ -464,16 +464,46 @@ function startReading(){
 }
 
 function copyR(){
-  if(window.lastResult){
-    var text = '';
-    window.lastResult.cards.forEach(function(c){
-      text += c.name + '\n' + c.reading + '\n\n';
+  if(!window.lastResult){
+    alert('Нет ответа для копирования. Сначала получите ответ.');
+    return;
+  }
+  
+  var text = '';
+  window.lastResult.cards.forEach(function(c){
+    text += c.name + '\n' + c.reading + '\n\n';
+  });
+  if(window.lastResult.conclusion) text += 'Вывод:\n' + window.lastResult.conclusion;
+  
+  // Пытаемся скопировать через clipboard API
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){
+      alert('Ответ скопирован в буфер обмена');
+    }).catch(function(err){
+      console.error('Ошибка clipboard:', err);
+      fallbackCopy(text);
     });
-    if(window.lastResult.conclusion) text += 'Вывод:\n' + window.lastResult.conclusion;
-    navigator.clipboard.writeText(text);
-    alert('Ответ скопирован в буфер обмена');
   } else {
-    alert('Нет ответа для копирования');
+    fallbackCopy(text);
+  }
+  
+  function fallbackCopy(text){
+    var textarea = document.createElement('textarea');
+    textarea.value = text;
+    document.body.appendChild(textarea);
+    textarea.select();
+    var success = false;
+    try {
+      success = document.execCommand('copy');
+    } catch (err) {
+      console.error('Ошибка execCommand:', err);
+    }
+    document.body.removeChild(textarea);
+    if(success){
+      alert('Ответ скопирован в буфер обмена');
+    } else {
+      alert('Не удалось скопировать. Выделите текст вручную.');
+    }
   }
 }
 </script>
