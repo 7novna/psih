@@ -464,18 +464,33 @@ function startReading(){
 }
 
 function copyR(){
-  if(!window.lastResult){
-    alert('Нет ответа для копирования. Сначала получите ответ.');
+  var text = '';
+  
+  // 1. Пытаемся взять из сохранённого объекта
+  if(window.lastResult && window.lastResult.cards){
+    window.lastResult.cards.forEach(function(c){
+      text += c.name + '\n' + c.reading + '\n\n';
+    });
+    if(window.lastResult.conclusion) text += 'Вывод:\n' + window.lastResult.conclusion;
+  } else {
+    // 2. Запасной вариант: берём текст из уже отображённых блоков на странице
+    var blocks = document.querySelectorAll('.rb-text');
+    blocks.forEach(function(block){
+      var parent = block.closest('.rb');
+      var nameDiv = parent ? parent.querySelector('.rb-name') : null;
+      if(nameDiv) text += nameDiv.innerText + '\n' + block.innerText + '\n\n';
+      else text += block.innerText + '\n\n';
+    });
+    var conclusionDiv = document.getElementById('ctxt');
+    if(conclusionDiv && conclusionDiv.innerText) text += 'Вывод:\n' + conclusionDiv.innerText;
+  }
+  
+  if(!text.trim()){
+    alert('Нет текста для копирования. Сначала получите ответ.');
     return;
   }
   
-  var text = '';
-  window.lastResult.cards.forEach(function(c){
-    text += c.name + '\n' + c.reading + '\n\n';
-  });
-  if(window.lastResult.conclusion) text += 'Вывод:\n' + window.lastResult.conclusion;
-  
-  // Пытаемся скопировать через clipboard API
+  // Копирование
   if(navigator.clipboard && navigator.clipboard.writeText){
     navigator.clipboard.writeText(text).then(function(){
       alert('Ответ скопирован в буфер обмена');
@@ -487,9 +502,9 @@ function copyR(){
     fallbackCopy(text);
   }
   
-  function fallbackCopy(text){
+  function fallbackCopy(txt){
     var textarea = document.createElement('textarea');
-    textarea.value = text;
+    textarea.value = txt;
     document.body.appendChild(textarea);
     textarea.select();
     var success = false;
