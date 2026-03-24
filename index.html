@@ -290,7 +290,7 @@ fetch(WK, {
         messages: [
             { 
                 role: 'system', 
-                content: 'Ты — честная подруга-психолог. Твой ответ — только JSON. В разделе "Что делать" пиши живой, поддерживающий текст. Без команд "сделай", "определи". Как подруга, которая понимает и не давит. Предложи способы помочь себе мягко. В конце добавь ремарку: "С позиции наглого и жесткого человека это звучало бы так: ..." Вывод — резкая правда. Тон: теплый, честный.'
+                content: 'Ты — честная подруга-психолог. Твой ответ — только JSON. Никакого текста до или после JSON. Начинай с { и заканчивай }. В разделе "Что делать" пиши живой, поддерживающий текст. Без команд "сделай", "определи". Как подруга, которая понимает и не давит. Предложи способы помочь себе мягко. В конце добавь ремарку: "С позиции наглого и жесткого человека это звучало бы так: ..." Вывод — резкая правда. Тон: теплый, честный.'
             },
             { role: 'user', content: prompt }
         ],
@@ -298,7 +298,26 @@ fetch(WK, {
         temperature: 0.85
     })
 })
-.then(function(r) { return r.json(); })
+.then(function(r) { return r.text(); })
+.then(function(text) {
+    // Пытаемся найти JSON в ответе
+    var jsonStart = text.indexOf('{');
+    var jsonEnd = text.lastIndexOf('}');
+    
+    if (jsonStart === -1 || jsonEnd === -1) {
+        throw new Error('В ответе не найден JSON');
+    }
+    
+    var jsonString = text.substring(jsonStart, jsonEnd + 1);
+    
+    try {
+        return JSON.parse(jsonString);
+    } catch (e) {
+        console.error('Ошибка парсинга JSON:', e);
+        console.error('Полученный текст:', text);
+        throw e;
+    }
+})
   .then(function(data){
     if(data.error)throw new Error(data.error.message);
     var raw=data.choices[0].message.content.replace(/```json|```/g,'').trim();
