@@ -286,7 +286,7 @@ fetch(WK, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+        model: 'llama-3.3-70b-versatile',
         messages: [
             { 
                 role: 'system', 
@@ -299,6 +299,30 @@ fetch(WK, {
     })
 })
 .then(function(r) { return r.text(); })
+.then(function(text) {
+    console.log('СЫРОЙ ОТВЕТ:');
+    console.log(text);
+    console.log('--- КОНЕЦ СЫРОГО ОТВЕТА ---');
+    
+    // Пытаемся найти JSON
+    var jsonStart = text.indexOf('{');
+    var jsonEnd = text.lastIndexOf('}');
+    
+    if (jsonStart === -1 || jsonEnd === -1) {
+        throw new Error('В ответе не найден JSON');
+    }
+    
+    var jsonString = text.substring(jsonStart, jsonEnd + 1);
+    jsonString = jsonString.trim();
+    
+    // Убираем всё после последней }
+    var lastBrace = jsonString.lastIndexOf('}');
+    if (lastBrace !== -1 && lastBrace < jsonString.length - 1) {
+        jsonString = jsonString.substring(0, lastBrace + 1);
+    }
+    
+    return JSON.parse(jsonString);
+})
 .then(function(text) {
     // Пытаемся найти JSON в ответе
     var jsonStart = text.indexOf('{');
