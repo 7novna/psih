@@ -321,15 +321,23 @@ function startReading(){
     return JSON.parse(jsonString);
   })
   .then(function(p) {
-    function cleanForeign(str){
+    // Жёсткая очистка от всех нерусских символов
+    function cleanText(str){
       if (!str) return '';
-      return str.replace(/[A-Za-z]/g, '').replace(/\s+/g, ' ').trim();
+      // Удаляем всё, кроме кириллицы, пробелов, знаков препинания и переносов строк
+      return str.replace(/[^\u0400-\u04FF\s\n.,!?\-:;"'()]/g, '').replace(/\s+/g, ' ').trim();
     }
     
     p.cards.forEach(function(c){ 
-      c.reading = cleanForeign(c.reading); 
+      c.reading = cleanText(c.reading); 
     });
-    if(p.conclusion) p.conclusion = cleanForeign(p.conclusion);
+    if(p.conclusion) p.conclusion = cleanText(p.conclusion);
+    
+    // Если нет ремарки в выводе — добавляем
+    if(p.conclusion && !p.conclusion.includes('С позиции наглого')){
+      var defaultRemark = '\n\nС позиции наглого и жесткого человека это звучало бы так: Хватит себя жалеть. Никто не придёт и не спасёт. Только ты можешь вытащить себя из этого. Действуй, пока не стало поздно.';
+      p.conclusion = p.conclusion + defaultRemark;
+    }
     
     document.getElementById('ldiv').style.display='none';
     var area=document.getElementById('rdiv');
