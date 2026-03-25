@@ -253,33 +253,28 @@ var SP = {
   fearself:'тема: страх быть собой — почему скрываем себя, боимся осуждения и как перестать'
 };
 
-// === Вспомогательные функции (очистка, ремарки, исправление предложений) ===
-function cleanText(str) {
+// Функции очистки и форматирования
+function cleanText(str){
   if (!str) return '';
   return str.replace(/[^\u0400-\u04FF\s\n.,!?\-:;"'()]/g, '').replace(/\s+/g, ' ').trim();
 }
-function removeReferralToSpecialist(str) {
+function removeReferralToSpecialist(str){
   if (!str) return '';
   return str.replace(/обратитесь к (?:психологу|специалисту)/gi, '')
             .replace(/поговорите с (?:психологом|специалистом)/gi, '')
             .replace(/найдите (?:доверенного человека|психолога|специалиста)/gi, '')
             .replace(/просить помощи/gi, '')
-            .replace(/обратиться за помощью/gi, '')
-            .replace(/попроси о помощи/gi, '')
-            .replace(/попросить поддержки/gi, '');
+            .replace(/обратиться за помощью/gi, '');
 }
-function fixIncompleteSentences(str) {
+function fixIncompleteSentences(str){
   if (!str) return '';
   str = str.replace(/и их\.\s*/gi, 'и их принятия. ');
   str = str.replace(/и их\s*$/gi, 'и их принятия.');
   str = str.replace(/но признать его влияние\s*$/gi, 'но важно признать его влияние на вашу жизнь.');
   str = str.replace(/чтобы\s*$/gi, 'чтобы двигаться дальше.');
-  str = str.replace(/что может\s*$/gi, 'что может стать первым шагом.');
-  str = str.replace(/это может включать\s*$/gi, 'это может включать простые действия, которые доступны уже сегодня.');
-  str = str.replace(/когда вы будете готовы\s*$/gi, 'когда вы будете готовы, можно начать действовать.');
   return str;
 }
-function getRemarkByTheme(theme) {
+function getRemarkByTheme(theme){
   if (theme.includes('самообвинение') || theme.includes('виню себя')) {
     return 'С позиции наглого и жесткого человека это звучало бы так: Твоя вина никому не нужна, кроме тебя самой. Пока ты себя грызёшь, другие живут дальше. Хватит.';
   }
@@ -290,7 +285,7 @@ function getRemarkByTheme(theme) {
     return 'С позиции наглого и жесткого человека это звучало бы так: Страх не защищает, он держит в клетке. Рискни. Один раз. И мир не рухнет.';
   }
   if (theme.includes('границы') || theme.includes('нет')) {
-    return 'С позиции наглого и жесткого человека это звучало бы так: Твоя доброта без границ — это не доброта, это удобство для других. Начни говорить "нет". Мир не рухнет.';
+    return 'С позиции наглого и жесткого человека это звучало бы так: Твоя доброта без границ — это удобство для других. Начни говорить "нет". Мир не рухнет.';
   }
   if (theme.includes('выгорание')) {
     return 'С позиции наглого и жесткого человека это звучало бы так: Ты не железная. Остановись. Или сломаешься. Выбор за тобой.';
@@ -302,22 +297,22 @@ function getRemarkByTheme(theme) {
     return 'С позиции наглого и жесткого человека это звучало бы так: Ты не хуже других. Просто поверила, что хуже. Хватит сравнивать. Живи свою жизнь.';
   }
   if (theme.includes('конфликт')) {
-    return 'С позиции наглого и жесткого человека это звучало бы так: Молчание не сохраняет отношения. Оно их убивает. Скажи, что тебе нужно. Или смирись с тем, что будешь молчать всегда.';
+    return 'С позиции наглого и жесткого человека это звучало бы так: Молчание не сохраняет отношения. Скажи, что тебе нужно. Или смирись, что будешь молчать всегда.';
   }
   if (theme.includes('решение')) {
-    return 'С позиции наглого и жесткого человека это звучало бы так: Идеального момента не будет. Ты никогда не будешь уверена на 100%. Можно ждать дальше, а можно признать, что решение — это всегда риск. И сделать шаг. Ошибка лучше, чем топтание на месте.';
+    return 'С позиции наглого и жесткого человека это звучало бы так: Идеального момента не будет. Ты никогда не будешь уверена на 100%. Ошибка лучше, чем топтание на месте.';
   }
   if (theme.includes('обида')) {
-    return 'С позиции наглого и жесткого человека это звучало бы так: Обида не наказывает того, кто тебя обидел. Она держит в тюрьме тебя. Хочешь свободы — отпусти. Не хочешь — продолжай носить этот камень.';
+    return 'С позиции наглого и жесткого человека это звучало бы так: Обида держит в тюрьме тебя. Хочешь свободы — отпусти. Не хочешь — продолжай носить этот камень.';
   }
   if (theme.includes('ревность')) {
-    return 'С позиции наглого и жесткого человека это звучало бы так: Ревность не удержит. Она только разрушит. Либо доверяешь, либо уходишь. Третьего не дано.';
+    return 'С позиции наглого и жесткого человека это звучало бы так: Ревность не удержит. Либо доверяешь, либо уходишь. Третьего не дано.';
   }
   if (theme.includes('мнение')) {
-    return 'С позиции наглого и жесткого человека это звучало бы так: Люди думают о тебе меньше, чем ты думаешь. У них своя жизнь. Хватит жить чужой.';
+    return 'С позиции наглого и жесткого человека это звучало бы так: Люди думают о тебе меньше, чем ты думаешь. Хватит жить чужой жизнью.';
   }
   if (theme.includes('прокрастинация')) {
-    return 'С позиции наглого и жесткого человека это звучало бы так: Никто не придёт и не сделает это за тебя. Можно ждать идеального момента, а можно начать. Прямо сейчас.';
+    return 'С позиции наглого и жесткого человека это звучало бы так: Никто не сделает это за тебя. Можно ждать идеального момента, а можно начать. Прямо сейчас.';
   }
   if (theme.includes('страх быть собой')) {
     return 'С позиции наглого и жесткого человека это звучало бы так: Ты боишься, что если покажешь себя настоящую — тебя отвергнут. Но кого ты потеряешь? Тех, кто любил твою маску. Стоит ли игра свеч?';
@@ -325,12 +320,12 @@ function getRemarkByTheme(theme) {
   return null;
 }
 
-// === Основные функции оплаты и разбора ===
-function startReading() {
+// Основные функции
+function startReading(){
   var q = document.getElementById('qInput').value.trim();
   var sp = document.getElementById('spreadSelect').value;
-  if (!q) { alert('Опишите вашу ситуацию — без этого не получится дать конкретный ответ'); return; }
-  if (!sp) { alert('Выберите тему'); return; }
+  if(!q){alert('Опишите вашу ситуацию');return;}
+  if(!sp){alert('Выберите тему');return;}
   var btn = document.getElementById('orderBtn');
   btn.disabled = true;
   btn.textContent = '🧠 Создаём платёж...';
@@ -347,7 +342,7 @@ function startReading() {
   })
   .then(r => r.json())
   .then(payment => {
-    if (payment.confirmation && payment.confirmation.confirmation_url) {
+    if(payment.confirmation && payment.confirmation.confirmation_url){
       localStorage.setItem('paymentId', payment.id);
       window.location.href = payment.confirmation.confirmation_url;
     } else {
@@ -420,8 +415,8 @@ function performReading(sp, q) {
       temperature: 0.85
     })
   })
-  .then(r => r.json())
-  .then(data => {
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
     if (data.error) throw new Error(data.error.message);
     var content = data.choices[0].message.content;
     if (typeof content === 'object') return content;
@@ -432,65 +427,82 @@ function performReading(sp, q) {
     var jsonString = cleaned.substring(jsonStart, jsonEnd + 1);
     return JSON.parse(jsonString);
   })
-  .then(p => {
-    // Очистка текста
-    p.cards.forEach(c => {
+  .then(function(p) {
+    p.cards.forEach(function(c){ 
       c.reading = cleanText(c.reading);
       c.reading = removeReferralToSpecialist(c.reading);
       c.reading = fixIncompleteSentences(c.reading);
     });
-    if (p.conclusion) {
+    if(p.conclusion) {
       p.conclusion = cleanText(p.conclusion);
       p.conclusion = removeReferralToSpecialist(p.conclusion);
       p.conclusion = fixIncompleteSentences(p.conclusion);
     }
-
-    // Добавляем ремарку
-    var remark = getRemarkByTheme(SP[sp]);
+    
+    var themeText = SP[sp] || '';
+    var remark = getRemarkByTheme(themeText);
     if (remark && p.conclusion && !p.conclusion.includes('С позиции наглого')) {
       p.conclusion = p.conclusion + '\n\n' + remark;
     } else if (remark && p.conclusion && p.conclusion.includes('С позиции наглого')) {
       p.conclusion = p.conclusion.replace(/С позиции наглого[^\n]+/g, remark);
     }
-
+    
     document.getElementById('ldiv').style.display = 'none';
     var area = document.getElementById('rdiv');
-    p.cards.forEach(c => {
+    p.cards.forEach(function(c){
       var d = document.createElement('div');
       d.className = 'rb';
       d.innerHTML = '<div class="rb-name">' + c.name + '</div><div class="rb-text">' + c.reading + '</div>';
       area.appendChild(d);
     });
-    if (p.conclusion) {
+    if(p.conclusion){
       document.getElementById('ctxt').textContent = p.conclusion;
       document.getElementById('cdiv').style.display = 'block';
     }
     window.lastResult = p;
   })
-  .catch(e => {
+  .catch(function(e){
     document.getElementById('ldiv').innerHTML = '⚠️ Ошибка: ' + e.message;
     console.error(e);
   })
-  .finally(() => {
+  .finally(function(){
     btn.disabled = false;
     btn.textContent = '🧠 Получить ответ';
   });
 }
 
-function copyR() {
-  if (!window.lastResult) {
+function copyR(){
+  if(!window.lastResult){
     alert('Нет ответа для копирования');
     return;
   }
   var text = '';
-  window.lastResult.cards.forEach(c => {
+  window.lastResult.cards.forEach(function(c){
     text += c.name + '\n' + c.reading + '\n\n';
   });
-  if (window.lastResult.conclusion) text += 'Вывод:\n' + window.lastResult.conclusion;
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).then(() => alert('Ответ скопирован')).catch(() => alert('Не удалось скопировать'));
+  if(window.lastResult.conclusion) text += 'Вывод:\n' + window.lastResult.conclusion;
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){
+      alert('Ответ скопирован в буфер обмена');
+    }).catch(function(err){
+      console.error(err);
+      fallbackCopy(text);
+    });
   } else {
-    alert('Не удалось скопировать');
+    fallbackCopy(text);
+  }
+  function fallbackCopy(txt){
+    var textarea = document.createElement('textarea');
+    textarea.value = txt;
+    document.body.appendChild(textarea);
+    textarea.select();
+    var success = false;
+    try {
+      success = document.execCommand('copy');
+    } catch (err) { console.error(err); }
+    document.body.removeChild(textarea);
+    if(success) alert('Ответ скопирован в буфер обмена');
+    else alert('Не удалось скопировать. Выделите текст вручную.');
   }
 }
 </script>
