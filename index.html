@@ -356,7 +356,8 @@ function selectSpread(val){
 }
 function toggleQuestion(val){
   var block = document.getElementById('questionBlock');
-  if(block) block.style.display = (val === 'own') ? 'block' : 'none';
+  if(block) block.style.display = 'block'; // всегда показывать
+}
 }
 function shuffle(arr){
   for(var i=arr.length-1;i>0;i--){
