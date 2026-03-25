@@ -233,8 +233,8 @@ footer p{font-size:18.2px;color:var(--ts);}
 </footer>
 
 <script>
-var WK='https://steep-bread-7af1.poponina73.workers.dev';
-var SP={
+var WK = 'https://steep-bread-7af1.poponina73.workers.dev';
+var SP = {
   anxiety:'тема: тревога и страхи — откуда берётся, как проявляется, что помогает',
   relations:'тема: отношения и границы — почему сложно выстраивать границы, как это изменить',
   selfesteem:'тема: самооценка и уверенность — откуда неуверенность, как с ней работать',
@@ -252,47 +252,157 @@ var SP={
   selfblame:'тема: самообвинение и гиперответственность — почему виним себя за всё',
   fearself:'тема: страх быть собой — почему скрываем себя, боимся осуждения и как перестать'
 };
-function selectSpread(val){
-  var sel = document.getElementById('spreadSelect');
-  if(sel){ sel.value = val; toggleQuestion(val); }
-  setTimeout(function(){
-    var s = document.getElementById('spreadSelect');
-    if(s){ s.scrollIntoView({behavior:'smooth', block:'center'}); }
-  }, 100);
+
+// === Вспомогательные функции (очистка, ремарки, исправление предложений) ===
+function cleanText(str) {
+  if (!str) return '';
+  return str.replace(/[^\u0400-\u04FF\s\n.,!?\-:;"'()]/g, '').replace(/\s+/g, ' ').trim();
 }
-function toggleQuestion(val){ /* textarea always visible */ }
-function shuffle(a){var b=a.slice();for(var i=b.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=b[i];b[i]=b[j];b[j]=t;}return b;}
-var drawn=[],ft='',personType='optimist';
-function setType(t){
-  personType=t;
-  ['optimist','pessimist'].forEach(function(x){
-    var b=document.getElementById('btn-'+x);
-    b.style.background=x===t?'var(--gold)':'var(--cb)';
-    b.style.color=x===t?'#3a2820':'var(--cocoa)';
+function removeReferralToSpecialist(str) {
+  if (!str) return '';
+  return str.replace(/обратитесь к (?:психологу|специалисту)/gi, '')
+            .replace(/поговорите с (?:психологом|специалистом)/gi, '')
+            .replace(/найдите (?:доверенного человека|психолога|специалиста)/gi, '')
+            .replace(/просить помощи/gi, '')
+            .replace(/обратиться за помощью/gi, '')
+            .replace(/попроси о помощи/gi, '')
+            .replace(/попросить поддержки/gi, '');
+}
+function fixIncompleteSentences(str) {
+  if (!str) return '';
+  str = str.replace(/и их\.\s*/gi, 'и их принятия. ');
+  str = str.replace(/и их\s*$/gi, 'и их принятия.');
+  str = str.replace(/но признать его влияние\s*$/gi, 'но важно признать его влияние на вашу жизнь.');
+  str = str.replace(/чтобы\s*$/gi, 'чтобы двигаться дальше.');
+  str = str.replace(/что может\s*$/gi, 'что может стать первым шагом.');
+  str = str.replace(/это может включать\s*$/gi, 'это может включать простые действия, которые доступны уже сегодня.');
+  str = str.replace(/когда вы будете готовы\s*$/gi, 'когда вы будете готовы, можно начать действовать.');
+  return str;
+}
+function getRemarkByTheme(theme) {
+  if (theme.includes('самообвинение') || theme.includes('виню себя')) {
+    return 'С позиции наглого и жесткого человека это звучало бы так: Твоя вина никому не нужна, кроме тебя самой. Пока ты себя грызёшь, другие живут дальше. Хватит.';
+  }
+  if (theme.includes('одиночество')) {
+    return 'С позиции наглого и жесткого человека это звучало бы так: Никто не придёт и не спасёт. Ты сама себе опора. Хватит ждать, начни жить.';
+  }
+  if (theme.includes('тревога') || theme.includes('страх')) {
+    return 'С позиции наглого и жесткого человека это звучало бы так: Страх не защищает, он держит в клетке. Рискни. Один раз. И мир не рухнет.';
+  }
+  if (theme.includes('границы') || theme.includes('нет')) {
+    return 'С позиции наглого и жесткого человека это звучало бы так: Твоя доброта без границ — это не доброта, это удобство для других. Начни говорить "нет". Мир не рухнет.';
+  }
+  if (theme.includes('выгорание')) {
+    return 'С позиции наглого и жесткого человека это звучало бы так: Ты не железная. Остановись. Или сломаешься. Выбор за тобой.';
+  }
+  if (theme.includes('прошлое') || theme.includes('отпустить')) {
+    return 'С позиции наглого и жесткого человека это звучало бы так: Прошлое не изменить. Ты можешь продолжать ходить по одному кругу, или сказать "стоп" и начать жить сейчас. Хватит.';
+  }
+  if (theme.includes('самооценка')) {
+    return 'С позиции наглого и жесткого человека это звучало бы так: Ты не хуже других. Просто поверила, что хуже. Хватит сравнивать. Живи свою жизнь.';
+  }
+  if (theme.includes('конфликт')) {
+    return 'С позиции наглого и жесткого человека это звучало бы так: Молчание не сохраняет отношения. Оно их убивает. Скажи, что тебе нужно. Или смирись с тем, что будешь молчать всегда.';
+  }
+  if (theme.includes('решение')) {
+    return 'С позиции наглого и жесткого человека это звучало бы так: Идеального момента не будет. Ты никогда не будешь уверена на 100%. Можно ждать дальше, а можно признать, что решение — это всегда риск. И сделать шаг. Ошибка лучше, чем топтание на месте.';
+  }
+  if (theme.includes('обида')) {
+    return 'С позиции наглого и жесткого человека это звучало бы так: Обида не наказывает того, кто тебя обидел. Она держит в тюрьме тебя. Хочешь свободы — отпусти. Не хочешь — продолжай носить этот камень.';
+  }
+  if (theme.includes('ревность')) {
+    return 'С позиции наглого и жесткого человека это звучало бы так: Ревность не удержит. Она только разрушит. Либо доверяешь, либо уходишь. Третьего не дано.';
+  }
+  if (theme.includes('мнение')) {
+    return 'С позиции наглого и жесткого человека это звучало бы так: Люди думают о тебе меньше, чем ты думаешь. У них своя жизнь. Хватит жить чужой.';
+  }
+  if (theme.includes('прокрастинация')) {
+    return 'С позиции наглого и жесткого человека это звучало бы так: Никто не придёт и не сделает это за тебя. Можно ждать идеального момента, а можно начать. Прямо сейчас.';
+  }
+  if (theme.includes('страх быть собой')) {
+    return 'С позиции наглого и жесткого человека это звучало бы так: Ты боишься, что если покажешь себя настоящую — тебя отвергнут. Но кого ты потеряешь? Тех, кто любил твою маску. Стоит ли игра свеч?';
+  }
+  return null;
+}
+
+// === Основные функции оплаты и разбора ===
+function startReading() {
+  var q = document.getElementById('qInput').value.trim();
+  var sp = document.getElementById('spreadSelect').value;
+  if (!q) { alert('Опишите вашу ситуацию — без этого не получится дать конкретный ответ'); return; }
+  if (!sp) { alert('Выберите тему'); return; }
+  var btn = document.getElementById('orderBtn');
+  btn.disabled = true;
+  btn.textContent = '🧠 Создаём платёж...';
+  localStorage.setItem('pendingSp', sp);
+  localStorage.setItem('pendingQ', q);
+  fetch(WK + '/create-payment', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      amount: '299.00',
+      description: 'Психологический разбор: ' + (SP[sp] || 'свой вопрос'),
+      returnUrl: window.location.href
+    })
+  })
+  .then(r => r.json())
+  .then(payment => {
+    if (payment.confirmation && payment.confirmation.confirmation_url) {
+      localStorage.setItem('paymentId', payment.id);
+      window.location.href = payment.confirmation.confirmation_url;
+    } else {
+      alert('Ошибка создания платежа');
+      btn.disabled = false;
+      btn.textContent = '🧠 Получить ответ';
+    }
+  })
+  .catch(err => {
+    console.error(err);
+    alert('Ошибка при создании платежа');
+    btn.disabled = false;
+    btn.textContent = '🧠 Получить ответ';
   });
 }
-function startReading(){
-  var q=document.getElementById('qInput').value.trim();
-  var sp=document.getElementById('spreadSelect').value;
-  if(!q){alert('Опишите вашу ситуацию — без этого не получится дать конкретный ответ');return;}
-  if(!sp){alert('Выберите тему');return;}
-  var btn=document.getElementById('orderBtn');
-  btn.disabled=true;btn.textContent='🧠 Анализирую...';
-  var rs=document.getElementById('rs');rs.style.display='block';
-  rs.scrollIntoView({behavior:'smooth'});
-  document.getElementById('ldiv').style.display='block';
-  document.getElementById('rdiv').innerHTML='';
-  document.getElementById('cdiv').style.display='none';
-  
-  // Определяем, нужно ли модели самой сгенерировать ремарку
-  var isOwnQuestion = (sp === 'own');
-  
-  var prompt = 'Тема: ' + SP[sp] + '. ' + 'Ситуация: "' + q + '". Ты психолог. Напиши развернутый психологический разбор. ОТВЕТ ТОЛЬКО JSON. Структура: {"cards":[{"name":"Что происходит","reading":"текст"},{"name":"Почему так","reading":"текст"},{"name":"Что делать","reading":"текст"}],"conclusion":"текст"}. В "Что делать" НЕ используй техники в виде списка команд. Не пиши "сделай то", "определи то". Напиши живой, поддерживающий текст от лица подруги-психолога. Объясни, что происходит, почему это нормально, и предложи 2-3 способа, как можно себе помочь. Способы должны быть КОНКРЕТНЫМИ: например, "возьми лист бумаги и напиши", "сядь и задай себе вопрос", "попробуй сделать одно маленькое действие". Не пиши общие фразы. Без приказов. С теплотой и пониманием. Пиши РАЗВЕРНУТО, но без воды. Каждую мысль доводи до конца, не обрывай предложения. ЗАПРЕЩЕНО отправлять к психологу или специалисту. ЗАПРЕЩЕНО писать "просить помощи", "обратиться за помощью". ТЫ и есть тот самый специалист. Пиши от своего лица. Запрещены звездочки и английские слова.';
 
-  // Для "Своего вопроса" добавляем требование сгенерировать ремарку
-  if (isOwnQuestion) {
-    prompt += ' В самом конце, ПОСЛЕ вывода, ОБЯЗАТЕЛЬНО добавь отдельной строкой ремарку: "С позиции наглого и жесткого человека это звучало бы так: [2-3 резкие фразы, которые бьют в цель конкретно в этой ситуации]". Не забудь про ремарку!';
+window.addEventListener('DOMContentLoaded', function() {
+  var pendingSp = localStorage.getItem('pendingSp');
+  var pendingQ = localStorage.getItem('pendingQ');
+  var paymentId = localStorage.getItem('paymentId');
+  if (pendingSp && pendingQ && paymentId) {
+    fetch(WK + '/payment-status?id=' + paymentId)
+      .then(r => r.json())
+      .then(payment => {
+        console.log('Статус платежа от Worker:', payment);
+        if (payment.status === 'succeeded') {
+          localStorage.removeItem('pendingSp');
+          localStorage.removeItem('pendingQ');
+          localStorage.removeItem('paymentId');
+          performReading(pendingSp, pendingQ);
+        } else {
+          alert('Платёж не завершён. Попробуйте ещё раз.');
+          localStorage.removeItem('pendingSp');
+          localStorage.removeItem('pendingQ');
+          localStorage.removeItem('paymentId');
+          document.getElementById('orderBtn').disabled = false;
+          document.getElementById('orderBtn').textContent = '🧠 Получить ответ';
+        }
+      })
+      .catch(err => console.error(err));
   }
+});
+
+function performReading(sp, q) {
+  var btn = document.getElementById('orderBtn');
+  btn.disabled = true;
+  btn.textContent = '🧠 Анализирую...';
+  var rs = document.getElementById('rs');
+  rs.style.display = 'block';
+  rs.scrollIntoView({behavior:'smooth'});
+  document.getElementById('ldiv').style.display = 'block';
+  document.getElementById('rdiv').innerHTML = '';
+  document.getElementById('cdiv').style.display = 'none';
+
+  var prompt = 'Тема: ' + SP[sp] + '. ' + 'Ситуация: "' + q + '". Ты психолог. Напиши развернутый психологический разбор. ОТВЕТ ТОЛЬКО JSON. Структура: {"cards":[{"name":"Что происходит","reading":"текст"},{"name":"Почему так","reading":"текст"},{"name":"Что делать","reading":"текст"}],"conclusion":"текст"}. В "Что делать" НЕ используй техники в виде списка команд. Не пиши "сделай то", "определи то". Напиши живой, поддерживающий текст от лица подруги-психолога. Объясни, что происходит, почему это нормально, и предложи 2-3 способа, как можно себе помочь. Без приказов. С теплотой и пониманием. Пиши РАЗВЕРНУТО, но без воды. Каждую мысль доводи до конца, не обрывай предложения. ЗАПРЕЩЕНО отправлять к психологу или специалисту. ЗАПРЕЩЕНО писать "просить помощи", "обратиться за помощью". ТЫ и есть тот самый специалист. Пиши от своего лица. Запрещены звездочки и английские слова.';
 
   fetch(WK, {
     method: 'POST',
@@ -310,218 +420,77 @@ function startReading(){
       temperature: 0.85
     })
   })
-  .then(function(r) { return r.json(); })
-  .then(function(data) {
+  .then(r => r.json())
+  .then(data => {
     if (data.error) throw new Error(data.error.message);
-    
     var content = data.choices[0].message.content;
-    
-    if (typeof content === 'object') {
-      return content;
-    }
-    
+    if (typeof content === 'object') return content;
     var cleaned = content.replace(/```json|```/g, '').trim();
     var jsonStart = cleaned.indexOf('{');
     var jsonEnd = cleaned.lastIndexOf('}');
-    
-    if (jsonStart === -1 || jsonEnd === -1) {
-      throw new Error('В ответе не найден JSON');
-    }
-    
+    if (jsonStart === -1 || jsonEnd === -1) throw new Error('В ответе не найден JSON');
     var jsonString = cleaned.substring(jsonStart, jsonEnd + 1);
     return JSON.parse(jsonString);
   })
-  .then(function(p) {
-    // Жёсткая очистка от всех нерусских символов
-    function cleanText(str){
-      if (!str) return '';
-      return str.replace(/[^\u0400-\u04FF\s\n.,!?\-:;"'()]/g, '').replace(/\s+/g, ' ').trim();
-    }
-    
-    // Удаляем фразы про обращение к специалисту и просьбу о помощи
-    function removeReferralToSpecialist(str){
-      if (!str) return '';
-      return str.replace(/обратитесь к (?:психологу|специалисту)/gi, '')
-                .replace(/поговорите с (?:психологом|специалистом)/gi, '')
-                .replace(/найдите (?:доверенного человека|психолога|специалиста)/gi, '')
-                .replace(/обращение к (?:специалисту|психологу)/gi, '')
-                .replace(/сходите к психологу/gi, '')
-                .replace(/помощь специалиста/gi, '')
-                .replace(/просить помощи/gi, '')
-                .replace(/обратиться за помощью/gi, '')
-                .replace(/попроси о помощи/gi, '')
-                .replace(/попросить поддержки/gi, '');
-    }
-    
-    // Исправляем оборванные предложения
-    function fixIncompleteSentences(str){
-      if (!str) return '';
-      str = str.replace(/и их\.\s*/gi, 'и их принятия. ');
-      str = str.replace(/и их\s*$/gi, 'и их принятия.');
-      str = str.replace(/но признать его влияние\s*$/gi, 'но важно признать его влияние на вашу жизнь.');
-      str = str.replace(/но признать его влияние,?\s*\./gi, 'но важно признать его влияние на вашу жизнь.');
-      str = str.replace(/чтобы\s*$/gi, 'чтобы двигаться дальше.');
-      str = str.replace(/что может\s*$/gi, 'что может стать первым шагом.');
-      str = str.replace(/это может включать\s*$/gi, 'это может включать простые действия, которые доступны уже сегодня.');
-      str = str.replace(/когда вы будете готовы\s*$/gi, 'когда вы будете готовы, можно начать действовать.');
-      return str;
-    }
-    
-    // Выбираем ремарку в зависимости от темы
-    function getRemarkByTheme(theme){
-      if (theme.includes('самообвинение') || theme.includes('виню себя') || theme === 'selfblame') {
-        return 'С позиции наглого и жесткого человека это звучало бы так: Твоя вина никому не нужна, кроме тебя самой. Пока ты себя грызёшь, другие живут дальше. Хватит.';
-      }
-      if (theme.includes('одиночество') || theme === 'loneliness') {
-        return 'С позиции наглого и жесткого человека это звучало бы так: Никто не придёт и не спасёт. Ты сама себе опора. Хватит ждать, начни жить.';
-      }
-      if (theme.includes('тревога') || theme.includes('страх') || theme === 'anxiety') {
-        return 'С позиции наглого и жесткого человека это звучало бы так: Страх не защищает, он держит в клетке. Рискни. Один раз. И мир не рухнет.';
-      }
-      if (theme.includes('границы') || theme.includes('нет') || theme === 'relations' || theme === 'nosay') {
-        return 'С позиции наглого и жесткого человека это звучало бы так: Твоя доброта без границ — это не доброта, это удобство для других. Начни говорить "нет". Мир не рухнет.';
-      }
-      if (theme.includes('выгорание') || theme === 'burnout') {
-        return 'С позиции наглого и жесткого человека это звучало бы так: Ты не железная. Остановись. Или сломаешься. Выбор за тобой.';
-      }
-      if (theme.includes('прошлое') || theme.includes('отпустить') || theme === 'letgo') {
-        return 'С позиции наглого и жесткого человека это звучало бы так: Прошлое не изменить. Ты можешь продолжать ходить по одному кругу, или сказать "стоп" и начать жить сейчас. Хватит.';
-      }
-      if (theme.includes('самооценка') || theme === 'selfesteem') {
-        return 'С позиции наглого и жесткого человека это звучало бы так: Ты не хуже других. Просто поверила, что хуже. Хватит сравнивать. Живи свою жизнь.';
-      }
-      if (theme.includes('конфликт') || theme === 'conflict') {
-        return 'С позиции наглого и жесткого человека это звучало бы так: Молчание не сохраняет отношения. Оно их убивает. Скажи, что тебе нужно. Или смирись с тем, что будешь молчать всегда.';
-      }
-      if (theme.includes('решение') || theme === 'decision') {
-        return 'С позиции наглого и жесткого человека это звучало бы так: Идеального момента не будет. Ты никогда не будешь уверена на 100%. Можно ждать дальше, а можно признать, что решение — это всегда риск. И сделать шаг. Ошибка лучше, чем топтание на месте.';
-      }
-      if (theme.includes('обида') || theme === 'anger') {
-        return 'С позиции наглого и жесткого человека это звучало бы так: Обида не наказывает того, кто тебя обидел. Она держит в тюрьме тебя. Хочешь свободы — отпусти. Не хочешь — продолжай носить этот камень.';
-      }
-      if (theme.includes('ревность') || theme === 'jealousy') {
-        return 'С позиции наглого и жесткого человека это звучало бы так: Ревность не удержит. Она только разрушит. Либо доверяешь, либо уходишь. Третьего не дано.';
-      }
-      if (theme.includes('мнение') || theme === 'opinion') {
-        return 'С позиции наглого и жесткого человека это звучало бы так: Люди думают о тебе меньше, чем ты думаешь. У них своя жизнь. Хватит жить чужой.';
-      }
-      if (theme.includes('прокрастинация') || theme === 'procrastination') {
-        return 'С позиции наглого и жесткого человека это звучало бы так: Никто не придёт и не сделает это за тебя. Можно ждать идеального момента, а можно начать. Прямо сейчас.';
-      }
-      if (theme.includes('страх быть собой') || theme === 'fearself') {
-        return 'С позиции наглого и жесткого человека это звучало бы так: Ты боишься, что если покажешь себя настоящую — тебя отвергнут. Но кого ты потеряешь? Тех, кто любил не тебя, а твою маску. Стоит ли игра свеч? Рискни. Один раз. И мир не рухнет.';
-      }
-      return null;
-    }
-    
-    p.cards.forEach(function(c){ 
+  .then(p => {
+    // Очистка текста
+    p.cards.forEach(c => {
       c.reading = cleanText(c.reading);
       c.reading = removeReferralToSpecialist(c.reading);
       c.reading = fixIncompleteSentences(c.reading);
     });
-    if(p.conclusion) {
+    if (p.conclusion) {
       p.conclusion = cleanText(p.conclusion);
       p.conclusion = removeReferralToSpecialist(p.conclusion);
       p.conclusion = fixIncompleteSentences(p.conclusion);
     }
-    
+
     // Добавляем ремарку
-    var themeText = SP[sp] || '';
-    var remark = null;
-    
-    if (isOwnQuestion) {
-      remark = null;
-    } else {
-      remark = getRemarkByTheme(themeText);
-    }
-    
-    if (!isOwnQuestion && remark && p.conclusion && !p.conclusion.includes('С позиции наглого')) {
+    var remark = getRemarkByTheme(SP[sp]);
+    if (remark && p.conclusion && !p.conclusion.includes('С позиции наглого')) {
       p.conclusion = p.conclusion + '\n\n' + remark;
-    } else if (!isOwnQuestion && remark && p.conclusion && p.conclusion.includes('С позиции наглого')) {
+    } else if (remark && p.conclusion && p.conclusion.includes('С позиции наглого')) {
       p.conclusion = p.conclusion.replace(/С позиции наглого[^\n]+/g, remark);
     }
-    
-    document.getElementById('ldiv').style.display='none';
-    var area=document.getElementById('rdiv');
-    p.cards.forEach(function(c){
-      var d=document.createElement('div');
-      d.className='rb';
-      d.innerHTML='<div class="rb-name">'+c.name+'</div><div class="rb-text">'+c.reading+'</div>';
+
+    document.getElementById('ldiv').style.display = 'none';
+    var area = document.getElementById('rdiv');
+    p.cards.forEach(c => {
+      var d = document.createElement('div');
+      d.className = 'rb';
+      d.innerHTML = '<div class="rb-name">' + c.name + '</div><div class="rb-text">' + c.reading + '</div>';
       area.appendChild(d);
     });
-    if(p.conclusion){
-      document.getElementById('ctxt').textContent=p.conclusion;
-      document.getElementById('cdiv').style.display='block';
+    if (p.conclusion) {
+      document.getElementById('ctxt').textContent = p.conclusion;
+      document.getElementById('cdiv').style.display = 'block';
     }
-    
     window.lastResult = p;
   })
-  .catch(function(e){
-    document.getElementById('ldiv').innerHTML='⚠️ Ошибка: '+e.message;
+  .catch(e => {
+    document.getElementById('ldiv').innerHTML = '⚠️ Ошибка: ' + e.message;
     console.error(e);
   })
-  .finally(function(){
-    btn.disabled=false;
-    btn.textContent='🧠 Получить ответ';
+  .finally(() => {
+    btn.disabled = false;
+    btn.textContent = '🧠 Получить ответ';
   });
 }
 
-function copyR(){
-  var text = '';
-  
-  // 1. Пытаемся взять из сохранённого объекта
-  if(window.lastResult && window.lastResult.cards){
-    window.lastResult.cards.forEach(function(c){
-      text += c.name + '\n' + c.reading + '\n\n';
-    });
-    if(window.lastResult.conclusion) text += 'Вывод:\n' + window.lastResult.conclusion;
-  } else {
-    // 2. Запасной вариант: берём текст из уже отображённых блоков на странице
-    var blocks = document.querySelectorAll('.rb-text');
-    blocks.forEach(function(block){
-      var parent = block.closest('.rb');
-      var nameDiv = parent ? parent.querySelector('.rb-name') : null;
-      if(nameDiv) text += nameDiv.innerText + '\n' + block.innerText + '\n\n';
-      else text += block.innerText + '\n\n';
-    });
-    var conclusionDiv = document.getElementById('ctxt');
-    if(conclusionDiv && conclusionDiv.innerText) text += 'Вывод:\n' + conclusionDiv.innerText;
-  }
-  
-  if(!text.trim()){
-    alert('Нет текста для копирования. Сначала получите ответ.');
+function copyR() {
+  if (!window.lastResult) {
+    alert('Нет ответа для копирования');
     return;
   }
-  
-  // Копирование
-  if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(text).then(function(){
-      alert('Ответ скопирован в буфер обмена');
-    }).catch(function(err){
-      console.error('Ошибка clipboard:', err);
-      fallbackCopy(text);
-    });
+  var text = '';
+  window.lastResult.cards.forEach(c => {
+    text += c.name + '\n' + c.reading + '\n\n';
+  });
+  if (window.lastResult.conclusion) text += 'Вывод:\n' + window.lastResult.conclusion;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => alert('Ответ скопирован')).catch(() => alert('Не удалось скопировать'));
   } else {
-    fallbackCopy(text);
-  }
-  
-  function fallbackCopy(txt){
-    var textarea = document.createElement('textarea');
-    textarea.value = txt;
-    document.body.appendChild(textarea);
-    textarea.select();
-    var success = false;
-    try {
-      success = document.execCommand('copy');
-    } catch (err) {
-      console.error('Ошибка execCommand:', err);
-    }
-    document.body.removeChild(textarea);
-    if(success){
-      alert('Ответ скопирован в буфер обмена');
-    } else {
-      alert('Не удалось скопировать. Выделите текст вручную.');
-    }
+    alert('Не удалось скопировать');
   }
 }
 </script>
