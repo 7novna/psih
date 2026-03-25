@@ -253,7 +253,6 @@ var SP = {
   fearself:'тема: страх быть собой — почему скрываем себя, боимся осуждения и как перестать'
 };
 
-// Функции очистки и форматирования
 function cleanText(str){
   if (!str) return '';
   return str.replace(/[^\u0400-\u04FF\s\n.,!?\-:;"'()]/g, '').replace(/\s+/g, ' ').trim();
@@ -320,7 +319,65 @@ function getRemarkByTheme(theme){
   return null;
 }
 
-// Основные функции
+function selectSpread(val){
+  var sel = document.getElementById('spreadSelect');
+  if(sel) sel.value = val;
+  toggleQuestion(val);
+  
+  var qInput = document.getElementById('qInput');
+  if(qInput){
+    var defaultQuestions = {
+      anxiety: 'Я постоянно чувствую тревогу без видимой причины. Особенно сильно это проявляется перед важными событиями. Не могу успокоиться, даже когда понимаю, что повода нет. Что со мной происходит?',
+      relations: 'В моих отношениях с партнёром сложно выстраивать границы. Я часто соглашаюсь на то, что мне не нравится, а потом злюсь. Как научиться говорить "нет"?',
+      selfesteem: 'Я часто сомневаюсь в себе, сравниваю себя с другими и всегда нахожу, в чём я хуже. Как перестать себя обесценивать и поверить в себя?',
+      burnout: 'Я чувствую постоянную усталость, даже после выходных. Всё, что раньше радовало, теперь не приносит удовольствия. Как понять, что это выгорание, и что делать?',
+      procrastination: 'Я постоянно откладываю важные дела на последний момент. Это вызывает стресс, но я не могу себя заставить начать. Как перестать прокрастинировать?',
+      conflict: 'В конфликтах я либо молчу, либо срываюсь на крик. Потом мучаюсь чувством вины. Как научиться справляться с конфликтами спокойно?',
+      loneliness: 'У меня есть друзья, семья, но внутри я чувствую пустоту и одиночество. Как будто меня никто не понимает. Почему так?',
+      decision: 'Я не могу принять важное решение. Боюсь ошибиться и всё время перебираю варианты. Как перестать мучиться и наконец выбрать?',
+      anger: 'Я часто обижаюсь на людей, даже на мелочи, а потом не могу отпустить. Как перестать застревать в обиде?',
+      nosay: 'Я не умею отказывать. Всегда говорю "да", даже когда мне это неудобно. Как научиться говорить "нет"?',
+      jealousy: 'Я постоянно ревную своего партнёра без повода. Мне кажется, что это разрушает наши отношения. Как справиться с ревностью?',
+      letgo: 'Я не могу отпустить прошлое. Всё время прокручиваю старые ситуации и обиды. Как перестать жить прошлым?',
+      opinion: 'Я слишком завишу от чужого мнения. Постоянно думаю, что обо мне подумают, и это мешает жить. Как перестать бояться осуждения?',
+      aloneinrel: 'Я нахожусь в отношениях, но чувствую себя одинокой. Мы вместе, но как будто каждый сам по себе. Почему так?',
+      selfblame: 'Я постоянно виню себя за всё, что происходит вокруг. Даже если это не моя вина. Как перестать брать на себя чужую ответственность?',
+      fearself: 'Я боюсь быть собой, показывать свои настоящие чувства. Мне кажется, что меня не примут. Как перестать скрываться?',
+      own: 'Опишите свою ситуацию подробно, чтобы я могла дать вам точный ответ.'
+    };
+    if(defaultQuestions[val]){
+      qInput.value = defaultQuestions[val];
+    } else {
+      qInput.value = '';
+    }
+  }
+  
+  document.getElementById('order').scrollIntoView({behavior:'smooth'});
+}
+
+function toggleQuestion(val){
+  var block = document.getElementById('questionBlock');
+  if(block) block.style.display = (val === 'own') ? 'block' : 'none';
+}
+function shuffle(arr){
+  for(var i=arr.length-1;i>0;i--){
+    var j=Math.floor(Math.random()*(i+1));
+    var t=arr[i]; arr[i]=arr[j]; arr[j]=t;
+  }
+  return arr;
+}
+function updatePrice(){
+  var count = parseInt(document.getElementById('cardCount').value) || 3;
+  var price = count * 50;
+  var priceSpan = document.getElementById('priceDisplay');
+  if(priceSpan) priceSpan.innerText = price + ' ₽';
+}
+document.addEventListener('DOMContentLoaded', function() {
+  var countSelect = document.getElementById('cardCount');
+  if(countSelect) countSelect.addEventListener('change', updatePrice);
+  updatePrice();
+});
+
 function startReading(){
   var q = document.getElementById('qInput').value.trim();
   var sp = document.getElementById('spreadSelect').value;
@@ -415,8 +472,8 @@ function performReading(sp, q) {
       temperature: 0.85
     })
   })
-  .then(function(r) { return r.json(); })
-  .then(function(data) {
+  .then(r => r.json())
+  .then(data => {
     if (data.error) throw new Error(data.error.message);
     var content = data.choices[0].message.content;
     if (typeof content === 'object') return content;
@@ -427,8 +484,8 @@ function performReading(sp, q) {
     var jsonString = cleaned.substring(jsonStart, jsonEnd + 1);
     return JSON.parse(jsonString);
   })
-  .then(function(p) {
-    p.cards.forEach(function(c){ 
+  .then(p => {
+    p.cards.forEach(c => {
       c.reading = cleanText(c.reading);
       c.reading = removeReferralToSpecialist(c.reading);
       c.reading = fixIncompleteSentences(c.reading);
@@ -449,7 +506,7 @@ function performReading(sp, q) {
     
     document.getElementById('ldiv').style.display = 'none';
     var area = document.getElementById('rdiv');
-    p.cards.forEach(function(c){
+    p.cards.forEach(c => {
       var d = document.createElement('div');
       d.className = 'rb';
       d.innerHTML = '<div class="rb-name">' + c.name + '</div><div class="rb-text">' + c.reading + '</div>';
@@ -461,11 +518,11 @@ function performReading(sp, q) {
     }
     window.lastResult = p;
   })
-  .catch(function(e){
+  .catch(e => {
     document.getElementById('ldiv').innerHTML = '⚠️ Ошибка: ' + e.message;
     console.error(e);
   })
-  .finally(function(){
+  .finally(() => {
     btn.disabled = false;
     btn.textContent = '🧠 Получить ответ';
   });
@@ -477,17 +534,12 @@ function copyR(){
     return;
   }
   var text = '';
-  window.lastResult.cards.forEach(function(c){
+  window.lastResult.cards.forEach(c => {
     text += c.name + '\n' + c.reading + '\n\n';
   });
   if(window.lastResult.conclusion) text += 'Вывод:\n' + window.lastResult.conclusion;
   if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(text).then(function(){
-      alert('Ответ скопирован в буфер обмена');
-    }).catch(function(err){
-      console.error(err);
-      fallbackCopy(text);
-    });
+    navigator.clipboard.writeText(text).then(() => alert('Ответ скопирован')).catch(err => fallbackCopy(text));
   } else {
     fallbackCopy(text);
   }
@@ -497,12 +549,10 @@ function copyR(){
     document.body.appendChild(textarea);
     textarea.select();
     var success = false;
-    try {
-      success = document.execCommand('copy');
-    } catch (err) { console.error(err); }
+    try { success = document.execCommand('copy'); } catch(e) { console.error(e); }
     document.body.removeChild(textarea);
-    if(success) alert('Ответ скопирован в буфер обмена');
-    else alert('Не удалось скопировать. Выделите текст вручную.');
+    if(success) alert('Ответ скопирован');
+    else alert('Не удалось скопировать');
   }
 }
 </script>
