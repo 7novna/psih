@@ -419,7 +419,6 @@ window.addEventListener('DOMContentLoaded', function() {
   var pendingSp = localStorage.getItem('pendingSp');
   var pendingQ = localStorage.getItem('pendingQ');
   if (pendingSp && pendingQ) {
-    // сразу вызываем разбор, не проверяя оплату
     localStorage.removeItem('pendingSp');
     localStorage.removeItem('pendingQ');
     performReading(pendingSp, pendingQ);
