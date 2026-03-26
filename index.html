@@ -356,9 +356,7 @@ function selectSpread(val){
 }
 function toggleQuestion(val){
   var block = document.getElementById('questionBlock');
-  // Всегда показываем поле ввода, потому что психологический разбор требует описания ситуации.
   if(block) block.style.display = 'block';
-  // Поле не очищаем, потому что пользователь может вносить правки в шаблонный текст.
 }
 function shuffle(arr){
   for(var i=arr.length-1;i>0;i--){
@@ -373,12 +371,19 @@ function updatePrice(){
 }
 document.addEventListener('DOMContentLoaded', function() {
   updatePrice();
-  // Инициализация: при загрузке страницы показать поле вопроса (оно всегда видимо)
   toggleQuestion(document.getElementById('spreadSelect').value);
 });
 
+function startReading(){
+  var q = document.getElementById('qInput').value.trim();
+  var sp = document.getElementById('spreadSelect').value;
+  if(!q){alert('Опишите вашу ситуацию');return;}
+  if(!sp){alert('Выберите тему');return;}
+  performReading(sp, q);
+}
+
 function performReading(sp, q) {
-  // Временная заглушка для теста
+  // Демо-заглушка без обращения к Worker
   var rs = document.getElementById('rs');
   rs.style.display = 'block';
   rs.scrollIntoView({behavior:'smooth'});
@@ -392,6 +397,15 @@ function performReading(sp, q) {
   document.getElementById('cdiv').style.display = 'block';
   document.getElementById('orderBtn').disabled = false;
   document.getElementById('orderBtn').textContent = '🧠 Получить ответ';
+  // Для копирования сохраним результат
+  window.lastResult = {
+    cards: [
+      { name: 'Что происходит', reading: 'Вы переживаете сложный период, когда кажется, что всё идёт не так. Это нормально — такие чувства бывают у многих.' },
+      { name: 'Почему так', reading: 'Вероятно, накопилась усталость от постоянного напряжения. Ваш организм и психика сигнализируют, что пора остановиться и пересмотреть приоритеты.' },
+      { name: 'Что делать', reading: 'Попробуйте выделить 15 минут в день только для себя. Запишите три вещи, за которые вы благодарны себе. Это маленькие шаги, но они возвращают опору.' }
+    ],
+    conclusion: 'Вы уже сделали первый шаг, обратившись к себе. Доверьтесь этому пути.'
+  };
 }
 
 window.addEventListener('DOMContentLoaded', function() {
@@ -405,93 +419,6 @@ window.addEventListener('DOMContentLoaded', function() {
 });
 
 window.lastResult = null;
-
-function performReading(sp, q) {
-  var btn = document.getElementById('orderBtn');
-  btn.disabled = true;
-  btn.textContent = '🧠 Анализирую...';
-  var rs = document.getElementById('rs');
-  rs.style.display = 'block';
-  rs.scrollIntoView({behavior:'smooth'});
-  document.getElementById('ldiv').style.display = 'block';
-  document.getElementById('rdiv').innerHTML = '';
-  document.getElementById('cdiv').style.display = 'none';
-
-  var prompt = 'Тема: ' + SP[sp] + '. ' + 'Ситуация: "' + q + '". Ты психолог. Напиши развернутый психологический разбор. ОТВЕТ ТОЛЬКО JSON. Структура: {"cards":[{"name":"Что происходит","reading":"текст"},{"name":"Почему так","reading":"текст"},{"name":"Что делать","reading":"текст"}],"conclusion":"текст"}. В "Что делать" НЕ используй техники в виде списка команд. Не пиши "сделай то", "определи то". Напиши живой, поддерживающий текст от лица подруги-психолога. Объясни, что происходит, почему это нормально, и предложи 2-3 способа, как можно себе помочь. Без приказов. С теплотой и пониманием. Пиши РАЗВЕРНУТО, но без воды. Каждую мысль доводи до конца, не обрывай предложения. ЗАПРЕЩЕНО отправлять к психологу или специалисту. ЗАПРЕЩЕНО писать "просить помощи", "обратиться за помощью". ТЫ и есть тот самый специалист. Пиши от своего лица. Запрещены звездочки и английские слова.';
-
-  fetch(WK, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile',
-      messages: [
-        { 
-          role: 'system', 
-          content: 'Ты — честная подруга-психолог. Твой ответ — только JSON. Никакого текста до или после JSON. Начинай с { и заканчивай }. В разделе "Что делать" пиши живой, поддерживающий текст. Без команд "сделай", "определи". Ты сама даёшь советы. ЗАПРЕЩЕНО писать "обратитесь к специалисту", "поговорите с психологом", "найдите доверенного человека", "просить помощи", "обратиться за помощью". Ты и есть этот человек. Пиши РАЗВЕРНУТО, но без воды. Каждую мысль доводи до конца, не обрывай предложения. Предлагай КОНКРЕТНЫЕ действия: "возьми лист бумаги", "напиши", "задай себе вопрос". Тон: теплый, честный.'
-        },
-        { role: 'user', content: prompt }
-      ],
-      max_tokens: 6500,
-      temperature: 0.85
-    })
-  })
-  .then(r => r.json())
-  .then(data => {
-    if (data.error) throw new Error(data.error.message);
-    var content = data.choices[0].message.content;
-    if (typeof content === 'object') return content;
-    var cleaned = content.replace(/```json|```/g, '').trim();
-    var jsonStart = cleaned.indexOf('{');
-    var jsonEnd = cleaned.lastIndexOf('}');
-    if (jsonStart === -1 || jsonEnd === -1) throw new Error('В ответе не найден JSON');
-    var jsonString = cleaned.substring(jsonStart, jsonEnd + 1);
-    return JSON.parse(jsonString);
-  })
-  .then(p => {
-    if (!p.cards || !Array.isArray(p.cards)) throw new Error('Некорректная структура ответа');
-    p.cards.forEach(c => {
-      c.reading = cleanText(c.reading);
-      c.reading = removeReferralToSpecialist(c.reading);
-      c.reading = fixIncompleteSentences(c.reading);
-    });
-    if(p.conclusion) {
-      p.conclusion = cleanText(p.conclusion);
-      p.conclusion = removeReferralToSpecialist(p.conclusion);
-      p.conclusion = fixIncompleteSentences(p.conclusion);
-    }
-    
-    var themeText = SP[sp] || '';
-    var remark = getRemarkByTheme(themeText);
-    if (remark && p.conclusion && !p.conclusion.includes('С позиции наглого')) {
-      p.conclusion = p.conclusion + '\n\n' + remark;
-    } else if (remark && p.conclusion && p.conclusion.includes('С позиции наглого')) {
-      p.conclusion = p.conclusion.replace(/С позиции наглого[^\n]+/g, remark);
-    }
-    
-    document.getElementById('ldiv').style.display = 'none';
-    var area = document.getElementById('rdiv');
-    area.innerHTML = '';
-    p.cards.forEach(c => {
-      var d = document.createElement('div');
-      d.className = 'rb';
-      d.innerHTML = '<div class="rb-name">' + c.name + '</div><div class="rb-text">' + c.reading + '</div>';
-      area.appendChild(d);
-    });
-    if(p.conclusion){
-      document.getElementById('ctxt').textContent = p.conclusion;
-      document.getElementById('cdiv').style.display = 'block';
-    }
-    window.lastResult = p;
-  })
-  .catch(e => {
-    document.getElementById('ldiv').innerHTML = '⚠️ Ошибка: ' + e.message;
-    console.error(e);
-  })
-  .finally(() => {
-    btn.disabled = false;
-    btn.textContent = '🧠 Получить ответ';
-  });
-}
 
 function copyR(){
   if(!window.lastResult){
