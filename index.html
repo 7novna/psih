@@ -377,42 +377,21 @@ document.addEventListener('DOMContentLoaded', function() {
   toggleQuestion(document.getElementById('spreadSelect').value);
 });
 
-function startReading(){
-  var q = document.getElementById('qInput').value.trim();
-  var sp = document.getElementById('spreadSelect').value;
-  if(!q){alert('Опишите вашу ситуацию');return;}
-  if(!sp){alert('Выберите тему');return;}
-  var btn = document.getElementById('orderBtn');
-  btn.disabled = true;
-  btn.textContent = '🧠 Создаём платёж...';
-  localStorage.setItem('pendingSp', sp);
-  localStorage.setItem('pendingQ', q);
-  fetch(WK + '/create-payment', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      amount: '30.00',
-      description: 'Психологический разбор: ' + (SP[sp] || 'свой вопрос'),
-      returnUrl: window.location.href
-    })
-  })
-  .then(r => r.json())
-  .then(payment => {
-    if(payment.confirmation && payment.confirmation.confirmation_url){
-      localStorage.setItem('paymentId', payment.id);
-      window.location.href = payment.confirmation.confirmation_url;
-    } else {
-      alert('Ошибка создания платежа');
-      btn.disabled = false;
-      btn.textContent = '🧠 Получить ответ';
-    }
-  })
-  .catch(err => {
-    console.error(err);
-    alert('Ошибка при создании платежа');
-    btn.disabled = false;
-    btn.textContent = '🧠 Получить ответ';
-  });
+function performReading(sp, q) {
+  // Временная заглушка для теста
+  var rs = document.getElementById('rs');
+  rs.style.display = 'block';
+  rs.scrollIntoView({behavior:'smooth'});
+  document.getElementById('ldiv').style.display = 'none';
+  document.getElementById('rdiv').innerHTML = `
+    <div class="rb"><div class="rb-name">Что происходит</div><div class="rb-text">Вы переживаете сложный период, когда кажется, что всё идёт не так. Это нормально — такие чувства бывают у многих.</div></div>
+    <div class="rb"><div class="rb-name">Почему так</div><div class="rb-text">Вероятно, накопилась усталость от постоянного напряжения. Ваш организм и психика сигнализируют, что пора остановиться и пересмотреть приоритеты.</div></div>
+    <div class="rb"><div class="rb-name">Что делать</div><div class="rb-text">Попробуйте выделить 15 минут в день только для себя. Запишите три вещи, за которые вы благодарны себе. Это маленькие шаги, но они возвращают опору.</div></div>
+  `;
+  document.getElementById('ctxt').textContent = 'Вы уже сделали первый шаг, обратившись к себе. Доверьтесь этому пути.';
+  document.getElementById('cdiv').style.display = 'block';
+  document.getElementById('orderBtn').disabled = false;
+  document.getElementById('orderBtn').textContent = '🧠 Получить ответ';
 }
 
 window.addEventListener('DOMContentLoaded', function() {
