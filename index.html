@@ -388,7 +388,7 @@ function startReading(){
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      amount: '20.00',
+      amount: '30.00',
       description: 'Психологический разбор: ' + (SP[sp] || 'свой вопрос'),
       returnUrl: window.location.href
     })
@@ -415,10 +415,26 @@ function startReading(){
 window.addEventListener('DOMContentLoaded', function() {
   var pendingSp = localStorage.getItem('pendingSp');
   var pendingQ = localStorage.getItem('pendingQ');
-  if (pendingSp && pendingQ) {
-    localStorage.removeItem('pendingSp');
-    localStorage.removeItem('pendingQ');
-    performReading(pendingSp, pendingQ);
+  var paymentId = localStorage.getItem('paymentId');
+  if (pendingSp && pendingQ && paymentId) {
+    fetch(WK + '/payment-status?id=' + paymentId)
+      .then(r => r.json())
+      .then(payment => {
+        if (payment.status === 'succeeded') {
+          localStorage.removeItem('pendingSp');
+          localStorage.removeItem('pendingQ');
+          localStorage.removeItem('paymentId');
+          performReading(pendingSp, pendingQ);
+        } else {
+          alert('Платёж не завершён. Попробуйте ещё раз.');
+          localStorage.removeItem('pendingSp');
+          localStorage.removeItem('pendingQ');
+          localStorage.removeItem('paymentId');
+          document.getElementById('orderBtn').disabled = false;
+          document.getElementById('orderBtn').textContent = '🧠 Получить ответ';
+        }
+      })
+      .catch(err => console.error(err));
   }
 });
 
