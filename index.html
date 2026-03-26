@@ -451,7 +451,13 @@ function performReading(sp, q) {
       temperature: 0.85
     })
   })
-  .then(r => r.json())
+  .then(async r => {
+    if (!r.ok) {
+      const text = await r.text();
+      throw new Error(`HTTP ${r.status}: ${text}`);
+    }
+    return r.json();
+  })
   .then(data => {
     if (data.error) throw new Error(data.error.message);
     var content = data.choices[0].message.content;
@@ -500,8 +506,8 @@ function performReading(sp, q) {
     window.lastResult = p;
   })
   .catch(e => {
+    console.error('Ошибка в performReading:', e);
     document.getElementById('ldiv').innerHTML = '⚠️ Ошибка: ' + e.message;
-    console.error(e);
   })
   .finally(() => {
     btn.disabled = false;
