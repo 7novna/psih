@@ -343,9 +343,9 @@ function selectSpread(val){
       aloneinrel: 'Я нахожусь в отношениях, но чувствую себя одинокой. Мы вместе, но как будто каждый сам по себе. Почему так?',
       selfblame: 'Я постоянно виню себя за всё, что происходит вокруг. Даже если это не моя вина. Как перестать брать на себя чужую ответственность?',
       fearself: 'Я боюсь быть собой, показывать свои настоящие чувства. Мне кажется, что меня не примут. Как перестать скрываться?',
-      own: 'Опишите свою ситуацию подробно, чтобы я могла дать вам точный ответ.'
+      own: ''
     };
-    if(defaultQuestions[val]){
+    if(defaultQuestions[val] !== undefined){
       qInput.value = defaultQuestions[val];
     } else {
       qInput.value = '';
@@ -356,8 +356,9 @@ function selectSpread(val){
 }
 function toggleQuestion(val){
   var block = document.getElementById('questionBlock');
-  if(block) block.style.display = 'block'; // всегда показывать
-}
+  // Всегда показываем поле ввода, потому что психологический разбор требует описания ситуации.
+  if(block) block.style.display = 'block';
+  // Поле не очищаем, потому что пользователь может вносить правки в шаблонный текст.
 }
 function shuffle(arr){
   for(var i=arr.length-1;i>0;i--){
@@ -367,15 +368,13 @@ function shuffle(arr){
   return arr;
 }
 function updatePrice(){
-  var count = parseInt(document.getElementById('cardCount').value) || 3;
-  var price = count * 50;
   var priceSpan = document.getElementById('priceDisplay');
-  if(priceSpan) priceSpan.innerText = price + ' ₽';
+  if(priceSpan) priceSpan.innerText = '299 ₽';
 }
 document.addEventListener('DOMContentLoaded', function() {
-  var countSelect = document.getElementById('cardCount');
-  if(countSelect) countSelect.addEventListener('change', updatePrice);
   updatePrice();
+  // Инициализация: при загрузке страницы показать поле вопроса (оно всегда видимо)
+  toggleQuestion(document.getElementById('spreadSelect').value);
 });
 
 function startReading(){
@@ -443,6 +442,8 @@ window.addEventListener('DOMContentLoaded', function() {
   }
 });
 
+window.lastResult = null;
+
 function performReading(sp, q) {
   var btn = document.getElementById('orderBtn');
   btn.disabled = true;
@@ -485,6 +486,7 @@ function performReading(sp, q) {
     return JSON.parse(jsonString);
   })
   .then(p => {
+    if (!p.cards || !Array.isArray(p.cards)) throw new Error('Некорректная структура ответа');
     p.cards.forEach(c => {
       c.reading = cleanText(c.reading);
       c.reading = removeReferralToSpecialist(c.reading);
@@ -506,6 +508,7 @@ function performReading(sp, q) {
     
     document.getElementById('ldiv').style.display = 'none';
     var area = document.getElementById('rdiv');
+    area.innerHTML = '';
     p.cards.forEach(c => {
       var d = document.createElement('div');
       d.className = 'rb';
